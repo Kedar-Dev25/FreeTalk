@@ -185,9 +185,19 @@
 
     // Check whether FreeTalk is running as an installed PWA
 
-    const isApp =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true;
+const isStandalone =
+  window.matchMedia("(display-mode: standalone)").matches;
+
+const isIOSStandalone =
+  window.navigator.standalone === true;
+
+alert(
+  "FreeTalk PWA DEBUG\n\n" +
+  "Standalone: " + isStandalone + "\n" +
+  "iOS Standalone: " + isIOSStandalone
+);
+
+const isApp = isStandalone || isIOSStandalone;
 
 
     const websiteUI = document.getElementById("websiteUI");
