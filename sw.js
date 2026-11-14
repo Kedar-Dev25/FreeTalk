@@ -1,24 +1,25 @@
 
-const CACHE_NAME = "freetalk-v2";
+const CACHE_NAME = "freetalk-v3";
 
-const FILES_TO_CACHE = [
+const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon.svg"
 ];
 
-// Install: cache the application files
+// INSTALL
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      await cache.addAll(FILES_TO_CACHE);
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(APP_SHELL);
       await self.skipWaiting();
-    })
+    })()
   );
 });
 
-// Activate: remove old FreeTalk caches
+// ACTIVATE
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -26,7 +27,10 @@ self.addEventListener("activate", (event) => {
 
       await Promise.all(
         keys
-          .filter(key => key.startsWith("freetalk-") && key !== CACHE_NAME)
+          .filter(
+            key => key.startsWith("freetalk-") &&
+                   key !== CACHE_NAME
+          )
           .map(key => caches.delete(key))
       );
 
@@ -35,7 +39,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch: serve cached files when offline
+// FETCH
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -45,18 +49,35 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  // HTML navigation: network first, cache fallback
+  // PAGE NAVIGATION
   if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
         try {
           return await fetch(request);
         } catch (error) {
-          return (
-            await caches.match(
-              new URL("./index.html", self.registration.scope).href
-            )
-          ) || Response.error();
+          const cache = await caches.open(CACHE_NAME);
+
+          const rootURL = new URL("./", self.registration.scope).href;
+          const indexURL = new URL(
+            "./index.html",
+            self.registration.scope
+          ).href;
+
+          const cachedPage =
+            await cache.match(request, { ignoreSearch: true }) ||
+            await cache.match(rootURL) ||
+            await cache.match(indexURL);
+
+          return cachedPage || new Response(
+            "FreeTalk is not available offline yet.",
+            {
+              status: 503,
+              headers: {
+                "Content-Type": "text/plain"
+              }
+            }
+          );
         }
       })()
     );
@@ -64,7 +85,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Other files: cache first
+  // OTHER FILES
   event.respondWith(
     (async () => {
       const cached = await caches.match(request);
@@ -82,10 +103,7 @@ self.addEventListener("fetch", (event) => {
         return response;
       } catch (error) {
         return new Response("File unavailable offline.", {
-          status: 503,
-          headers: {
-            "Content-Type": "text/plain"
-          }
+          status: 503
         });
       }
     })()
