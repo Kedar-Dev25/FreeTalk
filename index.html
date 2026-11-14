@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="theme-color" content="#0b0b0f">
   <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FreeTalk</title>
@@ -149,6 +150,10 @@
     <button id="installBtn">
       Install FreeTalk
     </button>
+    <p id="installHelp"
+   style="color:#8f8f98;font-size:13px;max-width:320px;"
+   aria-live="polite">
+</p>
   </div>
 
 
@@ -185,88 +190,97 @@
 
     // Check whether FreeTalk is running as an installed PWA
 
+
+// Detect installed PWA
 const isStandalone =
   window.matchMedia("(display-mode: standalone)").matches;
 
 const isIOSStandalone =
   window.navigator.standalone === true;
 
-alert(
-  "FreeTalk PWA DEBUG\n\n" +
-  "Standalone: " + isStandalone + "\n" +
-  "iOS Standalone: " + isIOSStandalone
-);
-
 const isApp = isStandalone || isIOSStandalone;
 
+const websiteUI = document.getElementById("websiteUI");
+const appUI = document.getElementById("appUI");
 
-    const websiteUI = document.getElementById("websiteUI");
-    const appUI = document.getElementById("appUI");
+const installBtn = document.getElementById("installBtn");
+const installHelp = document.getElementById("installHelp");
 
+// Show correct interface
+if (isApp) {
+  websiteUI.style.display = "none";
+  appUI.style.display = "flex";
+} else {
+  websiteUI.style.display = "flex";
+  appUI.style.display = "none";
+}
 
-    if (isApp) {
+// PWA installation
+let deferredPrompt = null;
 
-      // Installed PWA → show chat UI
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
 
-      websiteUI.style.display = "none";
-      appUI.style.display = "flex";
+  deferredPrompt = event;
 
-    } else {
+  installHelp.textContent = "FreeTalk is ready to install!";
+});
 
-      // Normal browser → show website UI
+installBtn.addEventListener("click", async () => {
 
-      websiteUI.style.display = "flex";
-      appUI.style.display = "none";
+  // iPhone installation instructions
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
+  if (isIOS && !deferredPrompt) {
+    installHelp.textContent =
+      "Tap Share in Safari, then select Add to Home Screen.";
+
+    return;
+  }
+
+  // Browser has not provided installation prompt
+  if (!deferredPrompt) {
+    installHelp.textContent =
+      "Open your browser menu ⋮ and select Install FreeTalk or Add to Home Screen.";
+
+    return;
+  }
+
+  // Show native installation prompt
+  const promptEvent = deferredPrompt;
+
+  deferredPrompt = null;
+
+  await promptEvent.prompt();
+
+  const { outcome } = await promptEvent.userChoice;
+
+  if (outcome === "accepted") {
+    installHelp.textContent = "FreeTalk installation started!";
+  } else {
+    installHelp.textContent = "Installation cancelled.";
+  }
+});
+
+// Detect successful installation
+window.addEventListener("appinstalled", () => {
+  installHelp.textContent = "FreeTalk installed successfully!";
+});
+
+// Register service worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      await navigator.serviceWorker.register("./sw.js");
+
+      console.log("FreeTalk Service Worker registered!");
+
+    } catch (error) {
+      console.error("Service Worker error:", error);
     }
+  });
+}
 
-
-    // PWA installation
-
-    const installBtn = document.getElementById("installBtn");
-
-    let deferredPrompt;
-
-    window.addEventListener("beforeinstallprompt", (event) => {
-
-      event.preventDefault();
-
-      deferredPrompt = event;
-
-      console.log("PWA installation is available!");
-
-    });
-
-
-    installBtn.addEventListener("click", async () => {
-
-      if (!deferredPrompt) {
-
-        console.log("PWA installation is not available yet.");
-
-        return;
-
-      }
-
-      deferredPrompt.prompt();
-
-      const { outcome } = await deferredPrompt.userChoice;
-
-      console.log("Installation choice:", outcome);
-
-      deferredPrompt = null;
-
-    });
-
-
-    // Service Worker
-
-    if ("serviceWorker" in navigator) {
-
-      navigator.serviceWorker.register("sw.js")
-        .then(() => console.log("Service worker registered"));
-
-    }
 
   </script>
 
