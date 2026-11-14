@@ -1,16 +1,19 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#0b0b0f">
-  <link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="./manifest.json">
   <title>FreeTalk</title>
 
+  <!-- These libraries are cached by sw.js for offline use. -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -20,7 +23,10 @@
       font-family: Arial, sans-serif;
     }
 
-    /* WEBSITE */
+    button, input { font: inherit; }
+    [hidden] { display: none !important; }
+
+    /* INSTALL PAGE */
 
     .website {
       min-height: 100vh;
@@ -29,100 +35,178 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 30px;
+      padding: 25px;
     }
 
     .website h1 {
-      font-size: 42px;
-      margin-bottom: 10px;
+      font-size: 40px;
+      margin-bottom: 8px;
     }
 
     .website p {
       color: #8f8f98;
       line-height: 1.5;
-      max-width: 400px;
+      max-width: 320px;
     }
 
     #installBtn {
-      margin-top: 20px;
+      margin-top: 18px;
       padding: 14px 22px;
       border: none;
       border-radius: 12px;
       background: white;
       color: black;
-      font-size: 15px;
       cursor: pointer;
     }
-
 
     /* APP */
 
     .app {
+      width: 100%;
       max-width: 600px;
-      height: 100vh;
+      height: 100dvh;
+      min-height: 100dvh;
       margin: auto;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     .header {
-      padding: 18px 20px;
+      padding: 18px;
       border-bottom: 1px solid #222228;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
     .logo {
-      font-size: 22px;
+      font-size: 23px;
       font-weight: bold;
     }
 
     .status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #9999a5;
       font-size: 12px;
-      color: #8f8f98;
     }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e5ae48;
+    }
+
+    /* CHAT */
 
     .chat {
       flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 20px 15px;
       display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 30px;
+      padding: 20px;
     }
 
     .empty-state h2 {
-      margin-bottom: 10px;
-      font-size: 22px;
+      font-size: 21px;
+      margin-bottom: 8px;
     }
 
     .empty-state p {
-      margin: 6px 0;
-      color: #8f8f98;
-      line-height: 1.5;
+      color: #858591;
+      font-size: 14px;
+      line-height: 1.6;
     }
+
+    .chat-icon {
+      font-size: 38px;
+      margin-bottom: 15px;
+      opacity: 0.7;
+    }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .message-row.mine { justify-content: flex-end; }
+    .message-row.theirs { justify-content: flex-start; }
+
+    .bubble {
+      max-width: 82%;
+      padding: 11px 14px;
+      border-radius: 16px;
+      background: #20202a;
+      overflow-wrap: anywhere;
+      text-align: left;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .mine .bubble {
+      background: #e8e8ef;
+      color: #111;
+      border-bottom-right-radius: 4px;
+    }
+
+    .theirs .bubble {
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-time {
+      display: block;
+      margin-top: 5px;
+      font-size: 10px;
+      opacity: 0.55;
+      text-align: right;
+    }
+
+    /* MESSAGE INPUT */
 
     .input-area {
       padding: 14px;
+      padding-bottom: max(14px, env(safe-area-inset-bottom));
       border-top: 1px solid #222228;
     }
 
     .message-box {
       display: flex;
-      gap: 8px;
+      gap: 9px;
     }
 
     .message-box input {
       flex: 1;
+      min-width: 0;
       padding: 14px;
       border: 1px solid #292930;
       border-radius: 14px;
       background: #15151b;
       color: white;
       outline: none;
-      font-size: 15px;
     }
+
+    .message-box input:disabled { opacity: 0.65; }
 
     .message-box button {
       width: 48px;
@@ -130,681 +214,1313 @@
       border-radius: 14px;
       background: white;
       color: black;
-      font-size: 18px;
+      font-size: 19px;
       cursor: pointer;
     }
 
+    .message-box button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
-/* FREETALK APP UI */
+    /* CONNECTION MODAL */
 
-.app {
-  height: 100dvh;
-  min-height: 100dvh;
-  overflow: hidden;
-}
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.68);
+      backdrop-filter: blur(5px);
+    }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
+    .modal {
+      width: 100%;
+      max-width: 390px;
+      max-height: 92dvh;
+      overflow-y: auto;
+      padding: 23px;
+      border: 1px solid #30303a;
+      border-radius: 22px;
+      background: #15151c;
+      text-align: center;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
+    }
 
-.logo {
-  font-size: 22px;
-  font-weight: bold;
-}
+    .modal-label {
+      color: #9999a8;
+      font-size: 10px;
+      letter-spacing: 2px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
 
-.brand-tag {
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: #777783;
-}
+    .modal h2 {
+      font-size: 22px;
+      margin: 0 0 9px;
+    }
 
-.status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 11px;
-  border: 1px solid #292930;
-  border-radius: 30px;
-  color: #b6b6c0;
-  background: #15151b;
-}
+    .modal-description {
+      color: #9999a8;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
 
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #f0b84b;
-}
+    /* TWO BUTTONS */
 
-.app-main {
-  flex: 1;
-  overflow-y: auto;
-  padding: 22px 18px 30px;
-  display: flex;
-}
+    .mode-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
 
-.screen {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
+    .mode-btn {
+      flex: 1;
+      min-height: 52px;
+      border: 1px solid #34343e;
+      border-radius: 13px;
+      background: #20202a;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
 
-.screen[hidden] {
-  display: none !important;
-}
+    .mode-btn.active {
+      background: white;
+      color: #111;
+      border-color: white;
+    }
 
-/* HOME SCREEN */
+    /* CONNECTION CONTENT */
 
-.hero-card {
-  padding: 30px 20px;
-  border: 1px solid #292930;
-  border-radius: 22px;
-  background: linear-gradient(145deg, #191923, #101015);
-  text-align: center;
-}
+    .connection-content {
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-.hero-icon {
-  width: 65px;
-  height: 65px;
-  margin: 0 auto 20px;
-  display: grid;
-  place-items: center;
-  border-radius: 20px;
-  background: #252535;
-  font-size: 30px;
-}
+    .notice {
+      width: 100%;
+      padding: 22px 15px;
+      border: 1px solid #30303a;
+      border-radius: 15px;
+      background: #101016;
+    }
 
-.eyebrow {
-  color: #9999a8;
-  font-size: 10px;
-  letter-spacing: 2px;
-  font-weight: bold;
-}
+    .notice-icon {
+      font-size: 38px;
+      margin-bottom: 12px;
+    }
 
-.hero-card h1 {
-  font-size: 27px;
-  line-height: 1.2;
-  margin: 12px 0;
-}
+    .notice strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
 
-.hero-card p {
-  color: #9999a8;
-  font-size: 14px;
-  line-height: 1.6;
-}
+    .notice p {
+      margin: 0;
+      color: #9999a8;
+      font-size: 12px;
+      line-height: 1.6;
+    }
 
-.primary-btn {
-  width: 100%;
-  margin-top: 20px;
-  padding: 16px;
-  border: none;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #111111;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-}
+    .qr-image {
+      display: block;
+      width: min(100%, 260px);
+      height: auto;
+      padding: 10px;
+      background: white;
+      border-radius: 12px;
+    }
 
-.network-note {
-  margin-top: 16px;
-  color: #9999a8;
-  font-size: 11px;
-  line-height: 1.5;
-}
+    .camera-frame {
+      width: 100%;
+      height: 260px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 15px;
+      background: #050507;
+    }
 
-.steps-card {
-  padding: 20px;
-  border: 1px solid #292930;
-  border-radius: 18px;
-  background: #121218;
-}
+    .camera-frame video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-.card-title {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-weight: bold;
-  margin-bottom: 18px;
-}
+    .scan-guide {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border: 2px solid white;
+      border-radius: 18px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 1000px rgba(0,0,0,0.12);
+      pointer-events: none;
+    }
 
-.card-title span {
-  color: #858592;
-  font-size: 11px;
-  font-weight: normal;
-}
+    .modal-note {
+      margin: 17px 0 0;
+      color: #888895;
+      font-size: 12px;
+      line-height: 1.6;
+    }
 
-.step-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 14px;
-  color: #c9c9d2;
-  font-size: 13px;
-}
-
-.step-number {
-  width: 27px;
-  height: 27px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: #252535;
-  color: white;
-  font-size: 12px;
-}
-
-/* CONNECTION SCREENS */
-
-.screen-top {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.back-btn {
-  width: 42px;
-  height: 42px;
-  border: 1px solid #292930;
-  border-radius: 12px;
-  background: #15151b;
-  color: white;
-  font-size: 22px;
-  cursor: pointer;
-}
-
-.screen-top h2 {
-  margin: 4px 0 0;
-  font-size: 22px;
-}
-
-.screen-top .eyebrow {
-  margin: 0;
-}
-
-.screen-description {
-  margin: 0;
-  color: #9999a8;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.choice-card {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid #292930;
-  border-radius: 16px;
-  background: #15151b;
-  color: white;
-  text-align: left;
-  cursor: pointer;
-}
-
-.choice-icon {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: #252535;
-  font-size: 25px;
-}
-
-.choice-card strong {
-  display: block;
-  font-size: 14px;
-}
-
-.choice-card small {
-  display: block;
-  margin-top: 5px;
-  color: #9999a8;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.choice-arrow {
-  margin-left: auto;
-  color: #9999a8;
-  font-size: 25px;
-}
-
-.hint-card {
-  padding: 15px;
-  border: 1px solid #292930;
-  border-radius: 14px;
-  background: #15151b;
-  color: #a6a6b1;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.qr-preview {
-  min-height: 230px;
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  border: 1px dashed #41414d;
-  border-radius: 18px;
-  background: #15151b;
-  text-align: center;
-}
-
-.qr-preview-icon {
-  font-size: 65px;
-  color: white;
-}
-
-.qr-preview strong {
-  font-size: 14px;
-}
-
-.qr-preview small {
-  color: #9999a8;
-  font-size: 12px;
-}
-
-.secondary-btn {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #292930;
-  border-radius: 13px;
-  background: transparent;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-button:focus-visible {
-  outline: 2px solid #ffffff;
-  outline-offset: 3px;
-}
-
+    @media (max-width: 400px) {
+      .modal { padding: 19px; }
+    }
   </style>
 </head>
 
 <body>
 
-  <!-- WEBSITE UI -->
+  <!-- WEBSITE / INSTALL PAGE -->
 
   <div class="website" id="websiteUI">
     <h1>FreeTalk</h1>
-
-    <p>
-      Talk to people nearby without relying on the internet.
-    </p>
-
-    <button id="installBtn">
-      Install FreeTalk
-    </button>
-    <p id="installHelp"
-   style="color:#8f8f98;font-size:13px;max-width:320px;"
-   aria-live="polite">
-</p>
+    <p>Talk to people nearby without relying on the internet.</p>
+    <button id="installBtn">Install FreeTalk</button>
+    <p id="installHelp" aria-live="polite"></p>
   </div>
 
 
+  <!-- CHAT APPLICATION -->
 
-<!-- PWA UI -->
+  <div class="app" id="appUI" hidden>
 
-<div class="app" id="appUI" style="display: none;">
-
-  <header class="header">
-    <div class="brand">
+    <header class="header">
       <div class="logo">FreeTalk</div>
-      <div class="brand-tag">NEARBY CHAT</div>
-    </div>
 
-    <div class="status" id="connectionStatus">
-      <span class="status-dot"></span>
-      Not connected
-    </div>
-  </header>
+      <div class="status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Not connected</span>
+      </div>
+    </header>
 
-  <main class="app-main">
+    <main class="chat" id="chatArea">
 
-    <!-- HOME SCREEN -->
-
-    <section class="screen" id="homeScreen">
-
-      <div class="hero-card">
-
-        <div class="hero-icon">📡</div>
-
-        <div class="eyebrow">
-          PRIVATE · NEARBY · OFFLINE
-        </div>
-
-        <h1>Chat with someone nearby.</h1>
-
-        <p>
-          Connect two phones in a few simple steps.
-          No internet needed.
+      <div class="empty-state" id="emptyState">
+        <div class="chat-icon">💬</div>
+        <h2 id="emptyTitle">Your conversations</h2>
+        <p id="emptyDescription">
+          Connect with someone nearby to start chatting.
+          Your messages will appear here.
         </p>
-
-        <button class="primary-btn" id="connectBtn">
-          ＋ Connect nearby
-        </button>
-
-        <div class="network-note">
-          Both phones should be connected to the same
-          Wi-Fi or hotspot.
-        </div>
-
       </div>
 
-      <div class="steps-card">
+      <div class="messages" id="messagesList"></div>
 
-        <div class="card-title">
-          <span>Quick connection</span>
-          <span>Just 2 scans</span>
-        </div>
+    </main>
 
-        <div class="step-row">
-          <span class="step-number">1</span>
-          Show or scan a QR code
-        </div>
-
-        <div class="step-row">
-          <span class="step-number">2</span>
-          Scan the reply QR code
-        </div>
-
-        <div class="step-row">
-          <span class="step-number">3</span>
-          Start chatting!
-        </div>
-
+    <footer class="input-area">
+      <div class="message-box">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="Connect to start chatting..."
+          maxlength="4000"
+          disabled
+        >
+        <button id="sendBtn" disabled aria-label="Send message">➤</button>
       </div>
+    </footer>
 
-    </section>
+  </div>
 
 
-    <!-- CONNECTION OPTIONS -->
+  <!-- SAME CONNECTION POPUP ON BOTH PHONES -->
 
-    <section class="screen" id="connectScreen" hidden>
+  <div class="overlay" id="connectionModal" hidden>
 
-      <div class="screen-top">
+    <div class="modal" role="dialog" aria-modal="true">
 
-        <button class="back-btn" data-back="homeScreen">
-          ←
-        </button>
+      <div class="modal-label">FREETALK · NEARBY CONNECTION</div>
 
-        <div>
-          <div class="eyebrow">CONNECT NEARBY</div>
-          <h2>Connect a phone</h2>
-        </div>
+      <h2 id="modalTitle">Connect nearby</h2>
 
-      </div>
-
-      <p class="screen-description">
-        Choose what you want to do on this phone.
+      <p class="modal-description" id="modalDescription">
+        Choose how you want to connect.
       </p>
 
-      <button class="choice-card" id="showQrBtn">
+      <!-- BOTH PHONES HAVE THE SAME TWO BUTTONS -->
 
-        <span class="choice-icon">▦</span>
-
-        <span>
-          <strong>Show my QR code</strong>
-          <small>Let the other phone scan your code.</small>
-        </span>
-
-        <span class="choice-arrow">›</span>
-
-      </button>
-
-      <button class="choice-card" id="scanQrBtn">
-
-        <span class="choice-icon">⌗</span>
-
-        <span>
-          <strong>Scan a QR code</strong>
-          <small>Scan the code shown on the other phone.</small>
-        </span>
-
-        <span class="choice-arrow">›</span>
-
-      </button>
-
-      <div class="hint-card">
-        Make sure both phones are connected to the same
-        Wi-Fi or hotspot.
-      </div>
-
-    </section>
-
-
-    <!-- SHOW QR SCREEN -->
-
-    <section class="screen" id="showQrScreen" hidden>
-
-      <div class="screen-top">
-
-        <button class="back-btn" data-back="connectScreen">
-          ←
+      <div class="mode-buttons">
+        <button class="mode-btn" id="cameraBtn">
+          📷 Camera
         </button>
 
-        <div>
-          <div class="eyebrow">PHONE A</div>
-          <h2>Show your QR code</h2>
-        </div>
-
-      </div>
-
-      <p class="screen-description">
-        Ask the other person to scan this code with FreeTalk.
-      </p>
-
-      <div class="qr-preview">
-        <div class="qr-preview-icon">▦</div>
-        <strong>QR code will appear here</strong>
-        <small>QR generation comes in the next step.</small>
-      </div>
-
-      <div class="hint-card">
-        After the other phone scans your code,
-        it will display a reply QR code.
-        You'll scan that to finish connecting.
-      </div>
-
-      <button class="secondary-btn" data-back="connectScreen">
-        Back to connection options
-      </button>
-
-    </section>
-
-
-    <!-- SCAN QR SCREEN -->
-
-    <section class="screen" id="scanQrScreen" hidden>
-
-      <div class="screen-top">
-
-        <button class="back-btn" data-back="connectScreen">
-          ←
+        <button class="mode-btn" id="qrBtn">
+          ▦ QR Code
         </button>
-
-        <div>
-          <div class="eyebrow">PHONE B</div>
-          <h2>Scan their QR code</h2>
-        </div>
-
       </div>
 
-      <p class="screen-description">
-        Point your camera at the QR code shown on the other phone.
+      <!-- QR OR CAMERA APPEARS HERE -->
+
+      <div class="connection-content" id="connectionContent">
+        <div class="notice">
+          <div class="notice-icon">📡</div>
+          <strong>Ready to connect</strong>
+          <p>
+            On one phone, tap QR Code.
+            On the other phone, tap Camera.
+          </p>
+        </div>
+      </div>
+
+      <p class="modal-note" id="modalNote">
+        Both phones should be connected to the same Wi-Fi
+        or hotspot.
       </p>
 
-      <div class="qr-preview">
-        <div class="qr-preview-icon">⌗</div>
-        <strong>Camera scanner will open here</strong>
-        <small>Offline QR scanning comes in the next step.</small>
-      </div>
-
-      <div class="hint-card">
-        Once scanned, FreeTalk will prepare a reply QR code
-        for the other phone.
-      </div>
-
-      <button class="secondary-btn" data-back="connectScreen">
-        Back to connection options
-      </button>
-
-    </section>
-
-  </main>
-
-</div>
-
+    </div>
+  </div>
 
 
   <script>
 
-    // Check whether FreeTalk is running as an installed PWA
+    // ==========================================
+    // 1. ELEMENTS AND APP STATE
+    // ==========================================
+
+    const websiteUI = document.getElementById("websiteUI");
+    const appUI = document.getElementById("appUI");
+    const connectionModal = document.getElementById("connectionModal");
+
+    const cameraBtn = document.getElementById("cameraBtn");
+    const qrBtn = document.getElementById("qrBtn");
+
+    const modalTitle = document.getElementById("modalTitle");
+    const modalDescription = document.getElementById("modalDescription");
+    const modalNote = document.getElementById("modalNote");
+    const connectionContent = document.getElementById("connectionContent");
+
+    const statusText = document.getElementById("statusText");
+    const statusDot = document.getElementById("statusDot");
+
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const messagesList = document.getElementById("messagesList");
+
+    const emptyState = document.getElementById("emptyState");
+    const emptyTitle = document.getElementById("emptyTitle");
+    const emptyDescription = document.getElementById("emptyDescription");
+
+    let peerConnection = null;
+    let dataChannel = null;
+
+    let connectionRole = null;
+    let sessionId = null;
+    let qrText = null;
+    let isConnected = false;
+
+    let scannerStream = null;
+    let scannerVideo = null;
+    let scannerFrame = null;
+    let scannerActive = false;
+    let scanBusy = false;
+
+    const canvas = document.createElement("canvas");
+    const canvasContext = canvas.getContext("2d", {
+      willReadFrequently: true
+    });
 
 
-// Detect installed PWA
-const isStandalone =
-  window.matchMedia("(display-mode: standalone)").matches;
+    // ==========================================
+    // 2. BASIC UI HELPERS
+    // ==========================================
 
-const isIOSStandalone =
-  window.navigator.standalone === true;
-
-const isApp = isStandalone || isIOSStandalone;
-
-const websiteUI = document.getElementById("websiteUI");
-const appUI = document.getElementById("appUI");
-const installBtn = document.getElementById("installBtn");
-const installHelp = document.getElementById("installHelp");
-
-// FreeTalk screen navigation
-
-const appScreens = [
-  "homeScreen",
-  "connectScreen",
-  "showQrScreen",
-  "scanQrScreen"
-].map(id => document.getElementById(id));
-
-function showAppScreen(screenId) {
-
-  appScreens.forEach(screen => {
-    screen.hidden = screen.id !== screenId;
-  });
-
-}
-
-// Open connection options
-document.getElementById("connectBtn").addEventListener("click", () => {
-  showAppScreen("connectScreen");
-});
-
-// Show QR screen
-document.getElementById("showQrBtn").addEventListener("click", () => {
-  showAppScreen("showQrScreen");
-});
-
-// Open scanner screen
-document.getElementById("scanQrBtn").addEventListener("click", () => {
-  showAppScreen("scanQrScreen");
-});
-
-// Back buttons
-document.querySelectorAll("[data-back]").forEach(button => {
-
-  button.addEventListener("click", () => {
-    showAppScreen(button.dataset.back);
-  });
-
-});
-
-
-// Show correct interface
-if (isApp) {
-  websiteUI.style.display = "none";
-  appUI.style.display = "flex";
-} else {
-  websiteUI.style.display = "flex";
-  appUI.style.display = "none";
-}
-
-// PWA installation
-let deferredPrompt = null;
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-
-  deferredPrompt = event;
-
-  installHelp.textContent = "FreeTalk is ready to install!";
-});
-
-installBtn.addEventListener("click", async () => {
-
-  // iPhone installation instructions
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-  if (isIOS && !deferredPrompt) {
-    installHelp.textContent =
-      "Tap Share in Safari, then select Add to Home Screen.";
-
-    return;
-  }
-
-  // Browser has not provided installation prompt
-  if (!deferredPrompt) {
-    installHelp.textContent =
-      "Open your browser menu ⋮ and select Install FreeTalk or Add to Home Screen.";
-
-    return;
-  }
-
-  // Show native installation prompt
-  const promptEvent = deferredPrompt;
-
-  deferredPrompt = null;
-
-  await promptEvent.prompt();
-
-  const { outcome } = await promptEvent.userChoice;
-
-  if (outcome === "accepted") {
-    installHelp.textContent = "FreeTalk installation started!";
-  } else {
-    installHelp.textContent = "Installation cancelled.";
-  }
-});
-
-// Detect successful installation
-window.addEventListener("appinstalled", () => {
-  installHelp.textContent = "FreeTalk installed successfully!";
-});
-
-// Register service worker
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
-    try {
-      await navigator.serviceWorker.register("./sw.js");
-
-      console.log("FreeTalk Service Worker registered!");
-
-    } catch (error) {
-      console.error("Service Worker error:", error);
+    function setStatus(text, connected = false) {
+      statusText.textContent = text;
+      statusDot.style.background = connected ? "#42c77a" : "#e5ae48";
     }
-  });
-}
 
+    function setConnected(connected) {
+      isConnected = connected;
+
+      messageInput.disabled = !connected;
+      sendBtn.disabled = !connected;
+
+      messageInput.placeholder = connected
+        ? "Type a message..."
+        : "Connect to start chatting...";
+
+      if (connected) {
+        setStatus("Connected", true);
+        connectionModal.hidden = true;
+        stopScanner();
+
+        if (messagesList.children.length === 0) {
+          emptyTitle.textContent = "You're connected!";
+          emptyDescription.textContent = "Send your first message.";
+          emptyState.hidden = false;
+        }
+      } else {
+        setStatus("Not connected", false);
+
+        if (messagesList.children.length === 0) {
+          emptyTitle.textContent = "Your conversations";
+          emptyDescription.textContent =
+            "Connect with someone nearby to start chatting.";
+          emptyState.hidden = false;
+        }
+      }
+    }
+
+    function setModal(title, description, note) {
+      modalTitle.textContent = title;
+      modalDescription.textContent = description;
+      modalNote.textContent = note || "";
+    }
+
+    function showNotice(title, description, icon = "📡") {
+      const box = document.createElement("div");
+      box.className = "notice";
+
+      const iconElement = document.createElement("div");
+      iconElement.className = "notice-icon";
+      iconElement.textContent = icon;
+
+      const heading = document.createElement("strong");
+      heading.textContent = title;
+
+      const paragraph = document.createElement("p");
+      paragraph.textContent = description;
+
+      box.append(iconElement, heading, paragraph);
+      connectionContent.replaceChildren(box);
+    }
+
+    function showInitialPopup(message = null) {
+      connectionModal.hidden = false;
+
+      cameraBtn.classList.remove("active");
+      qrBtn.classList.remove("active");
+
+      setModal(
+        "Connect nearby",
+        "Choose how you want to connect.",
+        message || "On one phone, tap QR Code. On the other phone, tap Camera."
+      );
+
+      showNotice(
+        "Ready to connect",
+        "Both phones use the same two buttons. No account or cloud messaging server.",
+        "📡"
+      );
+    }
+
+
+    // ==========================================
+    // 3. QR PAYLOAD ENCODING
+    // ==========================================
+
+    function bytesToBase64Url(bytes) {
+      let binary = "";
+
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        binary += String.fromCharCode(
+          ...bytes.subarray(i, i + 0x8000)
+        );
+      }
+
+      return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+    }
+
+    function base64UrlToBytes(value) {
+      let base64 = value
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      while (base64.length % 4) {
+        base64 += "=";
+      }
+
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      return bytes;
+    }
+
+    async function transformBytes(bytes, StreamClass) {
+      const stream = new Blob([bytes])
+        .stream()
+        .pipeThrough(new StreamClass("gzip"));
+
+      const result = await new Response(stream).arrayBuffer();
+
+      return new Uint8Array(result);
+    }
+
+    async function encodePayload(payload) {
+      const original = new TextEncoder().encode(
+        JSON.stringify(payload)
+      );
+
+      let bytes = original;
+      let prefix = "FT1N:";
+
+      if ("CompressionStream" in window) {
+        const compressed = await transformBytes(
+          original,
+          CompressionStream
+        );
+
+        if (compressed.length < original.length) {
+          bytes = compressed;
+          prefix = "FT1G:";
+        }
+      }
+
+      return prefix + bytesToBase64Url(bytes);
+    }
+
+    async function decodePayload(value) {
+      let compressed = false;
+
+      if (value.startsWith("FT1G:")) {
+        compressed = true;
+        value = value.slice(5);
+      } else if (value.startsWith("FT1N:")) {
+        value = value.slice(5);
+      } else {
+        throw new Error("This is not a FreeTalk QR code.");
+      }
+
+      let bytes = base64UrlToBytes(value);
+
+      if (compressed) {
+        if (!("DecompressionStream" in window)) {
+          throw new Error("Please update your browser to read this QR code.");
+        }
+
+        bytes = await transformBytes(
+          bytes,
+          DecompressionStream
+        );
+      }
+
+      if (bytes.length > 100000) {
+        throw new Error("The connection code is too large.");
+      }
+
+      const payload = JSON.parse(
+        new TextDecoder().decode(bytes)
+      );
+
+      if (
+        payload.app !== "FreeTalk" ||
+        payload.version !== 1 ||
+        !["offer", "answer"].includes(payload.type) ||
+        typeof payload.sdp !== "string" ||
+        typeof payload.session !== "string"
+      ) {
+        throw new Error("Invalid FreeTalk connection code.");
+      }
+
+      return payload;
+    }
+
+
+    // ==========================================
+    // 4. QR GENERATION
+    // ==========================================
+
+    function renderQr(text, title, description, note) {
+      if (typeof window.qrcode !== "function") {
+        throw new Error(
+          "QR generator is not loaded. Connect to the internet once to prepare offline files."
+        );
+      }
+
+      const qr = window.qrcode(0, "L");
+      qr.addData(text);
+      qr.make();
+
+      const image = document.createElement("img");
+      image.className = "qr-image";
+      image.alt = "FreeTalk connection QR code";
+      image.src = qr.createDataURL(5, 4);
+
+      connectionContent.replaceChildren(image);
+
+      setModal(title, description, note);
+    }
+
+    function createSessionId() {
+      const bytes = crypto.getRandomValues(new Uint8Array(12));
+
+      return Array.from(bytes)
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+
+    // ==========================================
+    // 5. WEBRTC HELPERS
+    // ==========================================
+
+    function waitForIceGathering(pc) {
+      if (pc.iceGatheringState === "complete") {
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve, reject) => {
+        let finished = false;
+
+        const timeout = setTimeout(() => {
+          finish();
+          reject(new Error("Preparing the connection took too long."));
+        }, 25000);
+
+        function finish() {
+          if (finished) return;
+          finished = true;
+
+          clearTimeout(timeout);
+          pc.removeEventListener(
+            "icegatheringstatechange",
+            checkState
+          );
+        }
+
+        function checkState() {
+          if (pc.iceGatheringState === "complete") {
+            finish();
+            resolve();
+          }
+        }
+
+        pc.addEventListener(
+          "icegatheringstatechange",
+          checkState
+        );
+
+        checkState();
+      });
+    }
+
+    function disposePeerConnection() {
+      stopScanner();
+
+      if (dataChannel) {
+        dataChannel.onopen = null;
+        dataChannel.onclose = null;
+        dataChannel.onerror = null;
+        dataChannel.onmessage = null;
+
+        try {
+          dataChannel.close();
+        } catch (_) {}
+      }
+
+      if (peerConnection) {
+        peerConnection.onconnectionstatechange = null;
+        peerConnection.ondatachannel = null;
+
+        try {
+          peerConnection.close();
+        } catch (_) {}
+      }
+
+      peerConnection = null;
+      dataChannel = null;
+
+      connectionRole = null;
+      sessionId = null;
+      qrText = null;
+    }
+
+    function watchPeerConnection(pc) {
+      pc.onconnectionstatechange = () => {
+        if (peerConnection !== pc) return;
+
+        if (pc.connectionState === "connected") {
+          setStatus("Connecting...", true);
+        }
+
+        if (pc.connectionState === "disconnected") {
+          setStatus("Reconnecting...", false);
+        }
+
+        if (pc.connectionState === "failed") {
+          handleConnectionFailure();
+        }
+      };
+    }
+
+    function handleConnectionFailure() {
+      disposePeerConnection();
+      setConnected(false);
+
+      showInitialPopup(
+        "The phones could not reach each other. Check the Wi-Fi or hotspot and try again."
+      );
+    }
+
+
+    // ==========================================
+    // 6. DATA CHANNEL AND CHAT
+    // ==========================================
+
+    function setupDataChannel(channel) {
+      dataChannel = channel;
+      channel.binaryType = "arraybuffer";
+
+      channel.onopen = () => {
+        setConnected(true);
+      };
+
+      channel.onclose = () => {
+        if (!isConnected) return;
+
+        disposePeerConnection();
+        setConnected(false);
+
+        showInitialPopup("Connection ended. You can connect again.");
+      };
+
+      channel.onerror = () => {
+        setStatus("Connection issue", false);
+      };
+
+      channel.onmessage = event => {
+        try {
+          const message = JSON.parse(event.data);
+
+          if (
+            message.type === "chat" &&
+            typeof message.text === "string"
+          ) {
+            addMessage(message.text, false, message.time);
+          }
+        } catch (error) {
+          console.error("Invalid incoming message:", error);
+        }
+      };
+    }
+
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function addMessage(text, mine, timestamp = Date.now()) {
+      emptyState.hidden = true;
+
+      const row = document.createElement("div");
+      row.className = "message-row " + (mine ? "mine" : "theirs");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      const content = document.createElement("div");
+      content.textContent = text;
+
+      const time = document.createElement("small");
+      time.className = "message-time";
+      time.textContent = formatTime(timestamp);
+
+      bubble.append(content, time);
+      row.appendChild(bubble);
+      messagesList.appendChild(row);
+
+      document.getElementById("chatArea").scrollTop =
+        document.getElementById("chatArea").scrollHeight;
+    }
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+
+      if (!text || !dataChannel || dataChannel.readyState !== "open") {
+        return;
+      }
+
+      const message = {
+        type: "chat",
+        text,
+        time: Date.now()
+      };
+
+      try {
+        dataChannel.send(JSON.stringify(message));
+        addMessage(text, true, message.time);
+        messageInput.value = "";
+        messageInput.focus();
+      } catch (error) {
+        console.error("Message send failed:", error);
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+
+    // ==========================================
+    // 7. CREATE CONNECTION QR
+    // ==========================================
+
+    async function createOrShowQr() {
+      stopScanner();
+
+      cameraBtn.classList.remove("active");
+      qrBtn.classList.add("active");
+
+      if (qrText) {
+        renderQr(
+          qrText,
+          connectionRole === "answerer" ? "Reply QR code" : "Your QR code",
+          connectionRole === "answerer"
+            ? "Let the other phone scan this reply code."
+            : "Let the other phone scan your connection code.",
+          connectionRole === "answerer"
+            ? "Keep this screen open while the other phone scans."
+            : "After the other phone scans this, tap Camera here to scan its reply."
+        );
+
+        return;
+      }
+
+      if (!window.RTCPeerConnection || typeof window.qrcode !== "function") {
+        throw new Error("This browser or its offline QR libraries are not ready.");
+      }
+
+      setModal(
+        "Preparing QR code",
+        "Creating your direct connection...",
+        "Please wait."
+      );
+
+      showNotice(
+        "Preparing connection",
+        "Gathering local network information. This can take a few seconds.",
+        "⏳"
+      );
+
+      disposePeerConnection();
+
+      connectionRole = "offerer";
+      sessionId = createSessionId();
+
+      // No STUN or TURN server: direct local-network candidates only.
+      const pc = new RTCPeerConnection({
+        iceServers: []
+      });
+
+      peerConnection = pc;
+
+      watchPeerConnection(pc);
+
+      const channel = pc.createDataChannel("freetalk-chat", {
+        ordered: true
+      });
+
+      setupDataChannel(channel);
+
+      const offer = await pc.createOffer();
+
+      await pc.setLocalDescription(offer);
+
+      // Wait until all local ICE candidates are included in SDP.
+      await waitForIceGathering(pc);
+
+      const payload = {
+        app: "FreeTalk",
+        version: 1,
+        type: "offer",
+        session: sessionId,
+        sdp: pc.localDescription.sdp
+      };
+
+      qrText = await encodePayload(payload);
+
+      renderQr(
+        qrText,
+        "Your QR code",
+        "Let the other phone scan this code using its Camera button.",
+        "After it displays a reply QR, tap Camera here to scan the reply."
+      );
+    }
+
+
+    // ==========================================
+    // 8. SCAN OFFER AND CREATE ANSWER QR
+    // ==========================================
+
+    async function createAnswerFromOffer(payload) {
+      disposePeerConnection();
+
+      connectionRole = "answerer";
+      sessionId = payload.session;
+
+      setModal(
+        "Preparing reply",
+        "Your phone received the connection request.",
+        "Creating your reply QR code..."
+      );
+
+      showNotice(
+        "Creating reply QR",
+        "Please keep FreeTalk open.",
+        "⏳"
+      );
+
+      const pc = new RTCPeerConnection({
+        iceServers: []
+      });
+
+      peerConnection = pc;
+
+      watchPeerConnection(pc);
+
+      pc.ondatachannel = event => {
+        setupDataChannel(event.channel);
+      };
+
+      await pc.setRemoteDescription({
+        type: "offer",
+        sdp: payload.sdp
+      });
+
+      const answer = await pc.createAnswer();
+
+      await pc.setLocalDescription(answer);
+
+      await waitForIceGathering(pc);
+
+      const answerPayload = {
+        app: "FreeTalk",
+        version: 1,
+        type: "answer",
+        session: sessionId,
+        sdp: pc.localDescription.sdp
+      };
+
+      qrText = await encodePayload(answerPayload);
+
+      cameraBtn.classList.remove("active");
+      qrBtn.classList.add("active");
+
+      renderQr(
+        qrText,
+        "Reply QR code",
+        "Your reply is ready. Let the first phone scan this code.",
+        "The connection will complete automatically after the other phone scans it."
+      );
+    }
+
+
+    // ==========================================
+    // 9. SCAN REPLY AND COMPLETE CONNECTION
+    // ==========================================
+
+    async function acceptAnswer(payload) {
+      if (
+        !peerConnection ||
+        connectionRole !== "offerer" ||
+        peerConnection.signalingState !== "have-local-offer"
+      ) {
+        throw new Error(
+          "Create your QR code first, then scan the other phone's reply."
+        );
+      }
+
+      if (payload.session !== sessionId) {
+        throw new Error(
+          "This reply belongs to a different connection. Scan the matching reply QR."
+        );
+      }
+
+      await peerConnection.setRemoteDescription({
+        type: "answer",
+        sdp: payload.sdp
+      });
+
+      setModal(
+        "Connecting...",
+        "The reply QR was accepted.",
+        "Waiting for the direct connection to open..."
+      );
+
+      showNotice(
+        "Establishing connection",
+        "Keep both phones open and connected to the same local network.",
+        "🔗"
+      );
+    }
+
+
+    // ==========================================
+    // 10. HANDLE SCANNED QR DATA
+    // ==========================================
+
+    async function handleScannedQr(value) {
+      try {
+        setModal(
+          "QR code detected",
+          "Reading connection information...",
+          "Please wait."
+        );
+
+        showNotice(
+          "Reading QR code",
+          "Checking the connection information.",
+          "⏳"
+        );
+
+        const payload = await decodePayload(value);
+
+        if (payload.type === "offer") {
+          if (
+            connectionRole === "offerer" &&
+            peerConnection &&
+            peerConnection.signalingState === "have-local-offer"
+          ) {
+            throw new Error(
+              "This phone already created a QR. Ask the other phone to scan it first."
+            );
+          }
+
+          await createAnswerFromOffer(payload);
+
+        } else if (payload.type === "answer") {
+          await acceptAnswer(payload);
+        }
+
+      } catch (error) {
+        console.error("QR processing error:", error);
+
+        setModal(
+          "Couldn't process QR code",
+          error.message || "Something went wrong.",
+          "Tap Camera to scan again, or QR Code to create a new connection."
+        );
+
+        showNotice(
+          "Connection not completed",
+          error.message || "Please try again.",
+          "⚠️"
+        );
+      }
+    }
+
+
+    // ==========================================
+    // 11. IN-APP CAMERA SCANNER
+    // ==========================================
+
+    function stopScanner() {
+      scannerActive = false;
+      scanBusy = false;
+
+      if (scannerFrame) {
+        cancelAnimationFrame(scannerFrame);
+        scannerFrame = null;
+      }
+
+      if (scannerStream) {
+        scannerStream.getTracks().forEach(track => track.stop());
+        scannerStream = null;
+      }
+
+      if (scannerVideo) {
+        scannerVideo.srcObject = null;
+        scannerVideo = null;
+      }
+    }
+
+    async function startScanner() {
+      stopScanner();
+
+      cameraBtn.classList.add("active");
+      qrBtn.classList.remove("active");
+
+      if (connectionRole === "offerer") {
+        setModal(
+          "Scan the reply QR",
+          "Point your camera at the reply code shown on the other phone.",
+          "Your original connection QR has already been created."
+        );
+      } else {
+        setModal(
+          "Scan a QR code",
+          "Point your camera at the other phone's connection QR.",
+          "After scanning an offer, FreeTalk will automatically create a reply QR."
+        );
+      }
+
+      if (!navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia) {
+        showNotice(
+          "Camera unavailable",
+          "Open FreeTalk from its HTTPS website or installed app and allow camera access.",
+          "📷"
+        );
+        return;
+      }
+
+      if (typeof window.jsQR !== "function" &&
+          typeof window.jsQR?.default !== "function") {
+        showNotice(
+          "Scanner library unavailable",
+          "Open FreeTalk once while online so its offline scanner can be cached.",
+          "⚠️"
+        );
+        return;
+      }
+
+      const frame = document.createElement("div");
+      frame.className = "camera-frame";
+
+      const video = document.createElement("video");
+      video.autoplay = true;
+      video.muted = true;
+      video.playsInline = true;
+
+      const guide = document.createElement("div");
+      guide.className = "scan-guide";
+
+      frame.append(video, guide);
+      connectionContent.replaceChildren(frame);
+
+      try {
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        });
+
+        scannerVideo = video;
+        video.srcObject = scannerStream;
+
+        await video.play();
+
+        scannerActive = true;
+        scanLoop();
+
+      } catch (error) {
+        console.error("Camera error:", error);
+
+        stopScanner();
+
+        showNotice(
+          "Camera permission needed",
+          "Allow FreeTalk to use your camera in browser settings, then tap Camera again.",
+          "📷"
+        );
+      }
+    }
+
+    function scanLoop() {
+      if (!scannerActive || !scannerVideo) return;
+
+      if (
+        scannerVideo.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA &&
+        !scanBusy
+      ) {
+        const width = scannerVideo.videoWidth;
+        const height = scannerVideo.videoHeight;
+
+        if (width && height) {
+          canvas.width = width;
+          canvas.height = height;
+
+          canvasContext.drawImage(
+            scannerVideo,
+            0,
+            0,
+            width,
+            height
+          );
+
+          const frame = canvasContext.getImageData(
+            0,
+            0,
+            width,
+            height
+          );
+
+          const decoder = window.jsQR.default || window.jsQR;
+
+          const result = decoder(
+            frame.data,
+            width,
+            height,
+            { inversionAttempts: "dontInvert" }
+          );
+
+          if (result && result.data) {
+            scanBusy = true;
+            stopScanner();
+
+            handleScannedQr(result.data);
+            return;
+          }
+        }
+      }
+
+      if (scannerActive) {
+        scannerFrame = requestAnimationFrame(scanLoop);
+      }
+    }
+
+
+    // ==========================================
+    // 12. BUTTON EVENTS
+    // ==========================================
+
+    cameraBtn.addEventListener("click", async () => {
+      try {
+        await startScanner();
+      } catch (error) {
+        console.error(error);
+        showNotice("Camera error", error.message, "⚠️");
+      }
+    });
+
+    qrBtn.addEventListener("click", async () => {
+      try {
+        await createOrShowQr();
+      } catch (error) {
+        console.error("QR generation error:", error);
+
+        setModal(
+          "Couldn't create QR code",
+          error.message || "Please try again.",
+          "Check that the offline QR libraries are available."
+        );
+
+        showNotice(
+          "QR generation failed",
+          error.message || "Please try again.",
+          "⚠️"
+        );
+      }
+    });
+
+
+    // ==========================================
+    // 13. PWA DETECTION
+    // ==========================================
+
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches;
+
+    const isIOSStandalone =
+      window.navigator.standalone === true;
+
+    const isApp = isStandalone || isIOSStandalone;
+
+    if (isApp) {
+      websiteUI.hidden = true;
+      appUI.hidden = false;
+
+      showInitialPopup();
+    } else {
+      websiteUI.hidden = false;
+      appUI.hidden = true;
+      connectionModal.hidden = true;
+    }
+
+
+    // ==========================================
+    // 14. PWA INSTALLATION
+    // ==========================================
+
+    const installBtn = document.getElementById("installBtn");
+    const installHelp = document.getElementById("installHelp");
+
+    let deferredPrompt = null;
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredPrompt = event;
+      installHelp.textContent = "FreeTalk is ready to install!";
+    });
+
+    installBtn.addEventListener("click", async () => {
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+      if (isIOS && !deferredPrompt) {
+        installHelp.textContent =
+          "Tap Share in Safari, then select Add to Home Screen.";
+        return;
+      }
+
+      if (!deferredPrompt) {
+        installHelp.textContent =
+          "Open your browser menu and select Install FreeTalk or Add to Home Screen.";
+        return;
+      }
+
+      const promptEvent = deferredPrompt;
+      deferredPrompt = null;
+
+      await promptEvent.prompt();
+
+      const { outcome } = await promptEvent.userChoice;
+
+      installHelp.textContent =
+        outcome === "accepted"
+          ? "FreeTalk installation started!"
+          : "Installation cancelled.";
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installHelp.textContent = "FreeTalk installed successfully!";
+    });
+
+
+    // ==========================================
+    // 15. SERVICE WORKER REGISTRATION
+    // ==========================================
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          await navigator.serviceWorker.register("./sw.js");
+
+          // Wait until the new worker has finished its installation
+          // and its offline resources have been cached.
+          await navigator.serviceWorker.ready;
+
+          console.log("FreeTalk offline resources are ready.");
+
+          if (!isApp) {
+            installHelp.textContent =
+              "FreeTalk is ready to install and prepare for offline use.";
+          }
+
+        } catch (error) {
+          console.error("Service Worker error:", error);
+        }
+      });
+    }
 
   </script>
 

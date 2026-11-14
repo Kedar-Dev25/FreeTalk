@@ -1,35 +1,57 @@
 
-const CACHE_NAME = "freetalk-v3";
+const CACHE_NAME = "freetalk-v4";
 
-const APP_SHELL = [
+const APP_FILES = [
   "./",
   "./index.html",
-  "./manifest.json",
-  "./icon.svg"
+  "./manifest.json"
 ];
 
-// INSTALL
-self.addEventListener("install", (event) => {
+const LIBRARY_URLS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js",
+  "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"
+];
+
+self.addEventListener("install", event => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(APP_SHELL);
+
+      // Cache the application shell.
+      await cache.addAll(APP_FILES);
+
+      // Download and cache both QR libraries.
+      // The new worker activates only after both are available.
+      await Promise.all(
+        LIBRARY_URLS.map(async url => {
+          const response = await fetch(url, {
+            mode: "cors",
+            cache: "reload"
+          });
+
+          if (!response.ok || response.type === "opaque") {
+            throw new Error("Could not cache library: " + url);
+          }
+
+          await cache.put(url, response);
+        })
+      );
+
       await self.skipWaiting();
     })()
   );
 });
 
-// ACTIVATE
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", event => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
 
       await Promise.all(
         keys
-          .filter(
-            key => key.startsWith("freetalk-") &&
-                   key !== CACHE_NAME
+          .filter(key =>
+            key.startsWith("freetalk-") &&
+            key !== CACHE_NAME
           )
           .map(key => caches.delete(key))
       );
@@ -39,38 +61,34 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// FETCH
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
   const request = event.request;
 
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
 
-  if (url.origin !== self.location.origin) return;
-
-  // PAGE NAVIGATION
-  if (request.mode === "navigate") {
+  // Handle the external QR libraries from local Cache Storage.
+  if (LIBRARY_URLS.includes(request.url)) {
     event.respondWith(
       (async () => {
+        const cached = await caches.match(request.url);
+
+        if (cached) return cached;
+
         try {
-          return await fetch(request);
+          const response = await fetch(request);
+
+          if (response.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request.url, response.clone());
+          }
+
+          return response;
+
         } catch (error) {
-          const cache = await caches.open(CACHE_NAME);
-
-          const rootURL = new URL("./", self.registration.scope).href;
-          const indexURL = new URL(
-            "./index.html",
-            self.registration.scope
-          ).href;
-
-          const cachedPage =
-            await cache.match(request, { ignoreSearch: true }) ||
-            await cache.match(rootURL) ||
-            await cache.match(indexURL);
-
-          return cachedPage || new Response(
-            "FreeTalk is not available offline yet.",
+          return new Response(
+            "QR library unavailable offline.",
             {
               status: 503,
               headers: {
@@ -85,7 +103,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // OTHER FILES
+  // Do not intercept unrelated external websites.
+  if (url.origin !== self.location.origin) return;
+
+  // Navigation: network first, cached app fallback.
+  if (request.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          return await fetch(request);
+        } catch (error) {
+          return (
+            await caches.match(
+              new URL("./index.html", self.registration.scope).href
+            )
+          ) || Response.error();
+        }
+      })()
+    );
+
+    return;
+  }
+
+  // Other local files: cache first.
   event.respondWith(
     (async () => {
       const cached = await caches.match(request);
@@ -101,9 +141,13 @@ self.addEventListener("fetch", (event) => {
         }
 
         return response;
+
       } catch (error) {
         return new Response("File unavailable offline.", {
-          status: 503
+          status: 503,
+          headers: {
+            "Content-Type": "text/plain"
+          }
         });
       }
     })()
