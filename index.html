@@ -133,6 +133,303 @@
       font-size: 18px;
       cursor: pointer;
     }
+
+
+/* FREETALK APP UI */
+
+.app {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.brand-tag {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #777783;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid #292930;
+  border-radius: 30px;
+  color: #b6b6c0;
+  background: #15151b;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f0b84b;
+}
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 18px 30px;
+  display: flex;
+}
+
+.screen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.screen[hidden] {
+  display: none !important;
+}
+
+/* HOME SCREEN */
+
+.hero-card {
+  padding: 30px 20px;
+  border: 1px solid #292930;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #191923, #101015);
+  text-align: center;
+}
+
+.hero-icon {
+  width: 65px;
+  height: 65px;
+  margin: 0 auto 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: #252535;
+  font-size: 30px;
+}
+
+.eyebrow {
+  color: #9999a8;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.hero-card h1 {
+  font-size: 27px;
+  line-height: 1.2;
+  margin: 12px 0;
+}
+
+.hero-card p {
+  color: #9999a8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.primary-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.network-note {
+  margin-top: 16px;
+  color: #9999a8;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.steps-card {
+  padding: 20px;
+  border: 1px solid #292930;
+  border-radius: 18px;
+  background: #121218;
+}
+
+.card-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: bold;
+  margin-bottom: 18px;
+}
+
+.card-title span {
+  color: #858592;
+  font-size: 11px;
+  font-weight: normal;
+}
+
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  color: #c9c9d2;
+  font-size: 13px;
+}
+
+.step-number {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #252535;
+  color: white;
+  font-size: 12px;
+}
+
+/* CONNECTION SCREENS */
+
+.screen-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.back-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #292930;
+  border-radius: 12px;
+  background: #15151b;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.screen-top h2 {
+  margin: 4px 0 0;
+  font-size: 22px;
+}
+
+.screen-top .eyebrow {
+  margin: 0;
+}
+
+.screen-description {
+  margin: 0;
+  color: #9999a8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.choice-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #292930;
+  border-radius: 16px;
+  background: #15151b;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #252535;
+  font-size: 25px;
+}
+
+.choice-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.choice-card small {
+  display: block;
+  margin-top: 5px;
+  color: #9999a8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.choice-arrow {
+  margin-left: auto;
+  color: #9999a8;
+  font-size: 25px;
+}
+
+.hint-card {
+  padding: 15px;
+  border: 1px solid #292930;
+  border-radius: 14px;
+  background: #15151b;
+  color: #a6a6b1;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.qr-preview {
+  min-height: 230px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px dashed #41414d;
+  border-radius: 18px;
+  background: #15151b;
+  text-align: center;
+}
+
+.qr-preview-icon {
+  font-size: 65px;
+  color: white;
+}
+
+.qr-preview strong {
+  font-size: 14px;
+}
+
+.qr-preview small {
+  color: #9999a8;
+  font-size: 12px;
+}
+
+.secondary-btn {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #292930;
+  border-radius: 13px;
+  background: transparent;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
   </style>
 </head>
 
@@ -157,33 +454,219 @@
   </div>
 
 
-  <!-- PWA UI -->
 
-  <div class="app" id="appUI" style="display: none;">
+<!-- PWA UI -->
 
-    <header class="header">
+<div class="app" id="appUI" style="display: none;">
+
+  <header class="header">
+    <div class="brand">
       <div class="logo">FreeTalk</div>
-      <div class="status">● OFFLINE</div>
-    </header>
-
-    <main class="chat">
-      <div class="empty-state">
-        <h2>No chats yet</h2>
-        <p>
-          Find someone nearby<br>
-          to start talking.
-        </p>
-      </div>
-    </main>
-
-    <div class="input-area">
-      <div class="message-box">
-        <input type="text" placeholder="Message...">
-        <button>➤</button>
-      </div>
+      <div class="brand-tag">NEARBY CHAT</div>
     </div>
 
-  </div>
+    <div class="status" id="connectionStatus">
+      <span class="status-dot"></span>
+      Not connected
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <!-- HOME SCREEN -->
+
+    <section class="screen" id="homeScreen">
+
+      <div class="hero-card">
+
+        <div class="hero-icon">📡</div>
+
+        <div class="eyebrow">
+          PRIVATE · NEARBY · OFFLINE
+        </div>
+
+        <h1>Chat with someone nearby.</h1>
+
+        <p>
+          Connect two phones in a few simple steps.
+          No internet needed.
+        </p>
+
+        <button class="primary-btn" id="connectBtn">
+          ＋ Connect nearby
+        </button>
+
+        <div class="network-note">
+          Both phones should be connected to the same
+          Wi-Fi or hotspot.
+        </div>
+
+      </div>
+
+      <div class="steps-card">
+
+        <div class="card-title">
+          <span>Quick connection</span>
+          <span>Just 2 scans</span>
+        </div>
+
+        <div class="step-row">
+          <span class="step-number">1</span>
+          Show or scan a QR code
+        </div>
+
+        <div class="step-row">
+          <span class="step-number">2</span>
+          Scan the reply QR code
+        </div>
+
+        <div class="step-row">
+          <span class="step-number">3</span>
+          Start chatting!
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- CONNECTION OPTIONS -->
+
+    <section class="screen" id="connectScreen" hidden>
+
+      <div class="screen-top">
+
+        <button class="back-btn" data-back="homeScreen">
+          ←
+        </button>
+
+        <div>
+          <div class="eyebrow">CONNECT NEARBY</div>
+          <h2>Connect a phone</h2>
+        </div>
+
+      </div>
+
+      <p class="screen-description">
+        Choose what you want to do on this phone.
+      </p>
+
+      <button class="choice-card" id="showQrBtn">
+
+        <span class="choice-icon">▦</span>
+
+        <span>
+          <strong>Show my QR code</strong>
+          <small>Let the other phone scan your code.</small>
+        </span>
+
+        <span class="choice-arrow">›</span>
+
+      </button>
+
+      <button class="choice-card" id="scanQrBtn">
+
+        <span class="choice-icon">⌗</span>
+
+        <span>
+          <strong>Scan a QR code</strong>
+          <small>Scan the code shown on the other phone.</small>
+        </span>
+
+        <span class="choice-arrow">›</span>
+
+      </button>
+
+      <div class="hint-card">
+        Make sure both phones are connected to the same
+        Wi-Fi or hotspot.
+      </div>
+
+    </section>
+
+
+    <!-- SHOW QR SCREEN -->
+
+    <section class="screen" id="showQrScreen" hidden>
+
+      <div class="screen-top">
+
+        <button class="back-btn" data-back="connectScreen">
+          ←
+        </button>
+
+        <div>
+          <div class="eyebrow">PHONE A</div>
+          <h2>Show your QR code</h2>
+        </div>
+
+      </div>
+
+      <p class="screen-description">
+        Ask the other person to scan this code with FreeTalk.
+      </p>
+
+      <div class="qr-preview">
+        <div class="qr-preview-icon">▦</div>
+        <strong>QR code will appear here</strong>
+        <small>QR generation comes in the next step.</small>
+      </div>
+
+      <div class="hint-card">
+        After the other phone scans your code,
+        it will display a reply QR code.
+        You'll scan that to finish connecting.
+      </div>
+
+      <button class="secondary-btn" data-back="connectScreen">
+        Back to connection options
+      </button>
+
+    </section>
+
+
+    <!-- SCAN QR SCREEN -->
+
+    <section class="screen" id="scanQrScreen" hidden>
+
+      <div class="screen-top">
+
+        <button class="back-btn" data-back="connectScreen">
+          ←
+        </button>
+
+        <div>
+          <div class="eyebrow">PHONE B</div>
+          <h2>Scan their QR code</h2>
+        </div>
+
+      </div>
+
+      <p class="screen-description">
+        Point your camera at the QR code shown on the other phone.
+      </p>
+
+      <div class="qr-preview">
+        <div class="qr-preview-icon">⌗</div>
+        <strong>Camera scanner will open here</strong>
+        <small>Offline QR scanning comes in the next step.</small>
+      </div>
+
+      <div class="hint-card">
+        Once scanned, FreeTalk will prepare a reply QR code
+        for the other phone.
+      </div>
+
+      <button class="secondary-btn" data-back="connectScreen">
+        Back to connection options
+      </button>
+
+    </section>
+
+  </main>
+
+</div>
+
 
 
   <script>
@@ -202,9 +685,50 @@ const isApp = isStandalone || isIOSStandalone;
 
 const websiteUI = document.getElementById("websiteUI");
 const appUI = document.getElementById("appUI");
-
 const installBtn = document.getElementById("installBtn");
 const installHelp = document.getElementById("installHelp");
+
+// FreeTalk screen navigation
+
+const appScreens = [
+  "homeScreen",
+  "connectScreen",
+  "showQrScreen",
+  "scanQrScreen"
+].map(id => document.getElementById(id));
+
+function showAppScreen(screenId) {
+
+  appScreens.forEach(screen => {
+    screen.hidden = screen.id !== screenId;
+  });
+
+}
+
+// Open connection options
+document.getElementById("connectBtn").addEventListener("click", () => {
+  showAppScreen("connectScreen");
+});
+
+// Show QR screen
+document.getElementById("showQrBtn").addEventListener("click", () => {
+  showAppScreen("showQrScreen");
+});
+
+// Open scanner screen
+document.getElementById("scanQrBtn").addEventListener("click", () => {
+  showAppScreen("scanQrScreen");
+});
+
+// Back buttons
+document.querySelectorAll("[data-back]").forEach(button => {
+
+  button.addEventListener("click", () => {
+    showAppScreen(button.dataset.back);
+  });
+
+});
+
 
 // Show correct interface
 if (isApp) {
