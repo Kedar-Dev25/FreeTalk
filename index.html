@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#0b0b0f">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
   <link rel="manifest" href="./manifest.json">
   <title>FreeTalk</title>
 
@@ -42,7 +43,29 @@
       line-height: 1.5;
       max-width: 320px;
     }
+.header,
+.input-area {
+  flex-shrink: 0;
+}
 
+.header {
+  padding: 12px 16px;
+  min-height: 58px;
+}
+
+.chat {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+}
+
+.input-area {
+  padding: 10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
     #installBtn {
       margin-top: 18px;
       padding: 14px 22px;
@@ -54,15 +77,19 @@
     }
 
     .app {
-      width: 100%;
-      max-width: 600px;
-      height: 100dvh;
-      min-height: 100dvh;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+  position: fixed;
+  top: var(--visual-top, 0px);
+  left: 0;
+  width: 100%;
+  max-width: 600px;
+  height: var(--visual-height, 100dvh);
+  min-height: 0;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0b0b0f;
+}
 
     .header {
       padding: 18px;
@@ -437,6 +464,47 @@
     @media (max-width: 400px) {
       .modal { padding: 19px; }
     }
+
+
+    /* FINAL MOBILE CHAT LAYOUT */
+
+.header {
+  flex-shrink: 0;
+  min-height: 58px;
+  padding: 12px 16px;
+}
+
+.logo {
+  font-size: 21px;
+}
+
+.chat {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+}
+
+.input-area {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.message-box input {
+  min-height: 48px;
+}
+
+.message-box button {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.messages {
+  gap: 8px;
+}
   </style>
 </head>
 
@@ -866,6 +934,44 @@
       });
     }
 
+function updateAppViewport() {
+  const viewport = window.visualViewport;
+
+  const height = viewport
+    ? viewport.height
+    : window.innerHeight;
+
+  const top = viewport
+    ? viewport.offsetTop
+    : 0;
+
+  document.documentElement.style.setProperty(
+    "--visual-height",
+    `${height}px`
+  );
+
+  document.documentElement.style.setProperty(
+    "--visual-top",
+    `${top}px`
+  );
+}
+
+updateAppViewport();
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener(
+    "resize",
+    updateAppViewport
+  );
+
+  window.visualViewport.addEventListener(
+    "scroll",
+    updateAppViewport
+  );
+}
+
+window.addEventListener("resize", updateAppViewport);
+
     function disposePeerConnection() {
       stopScanner();
 
@@ -997,27 +1103,37 @@
     }
 
     function addMessage(text, mine, timestamp = Date.now()) {
-      emptyState.hidden = true;
+  const wasNearBottom =
+    chatArea.scrollHeight -
+    chatArea.scrollTop -
+    chatArea.clientHeight < 100;
 
-      const row = document.createElement("div");
-      row.className = "message-row " + (mine ? "mine" : "theirs");
+  emptyState.hidden = true;
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
+  const row = document.createElement("div");
+  row.className = "message-row " + (mine ? "mine" : "theirs");
 
-      const content = document.createElement("div");
-      content.textContent = text;
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
 
-      const time = document.createElement("small");
-      time.className = "message-time";
-      time.textContent = formatTime(timestamp);
+  const content = document.createElement("div");
+  content.textContent = text;
 
-      bubble.append(content, time);
-      row.appendChild(bubble);
-      messagesList.appendChild(row);
+  const time = document.createElement("small");
+  time.className = "message-time";
+  time.textContent = formatTime(timestamp);
 
+  bubble.append(content, time);
+  row.appendChild(bubble);
+  messagesList.appendChild(row);
+
+  if (wasNearBottom || mine) {
+    requestAnimationFrame(() => {
       chatArea.scrollTop = chatArea.scrollHeight;
-    }
+    });
+  }
+}
+   
 
     function sendMessage() {
       const text = messageInput.value.trim();
